@@ -1,4 +1,4 @@
-#include <limits.h>
+ #include <limits.h>
 #include <string.h>
 #include "ast.h"
 #include "code.h"
@@ -8,11 +8,13 @@
 #include "utilities.h"
 #include "regname.h"
 #include "code_seq.h"
+#include "code_utils.h"
 
 #define STACK_SPACE 4096
 
 extern void gen_code_initialize(){
   literal_table_initialize();
+  code_seq main_seq = code_utils_set_up_program();
 }
 
 //bf must be open for writing in binary, parser must have completed scope
@@ -56,8 +58,21 @@ static void gen_code_output_program(BOFFILE bf, code_seq main_sequence){
 }//end of gen_code_output_program
 
 void gen_code_program(BOFFILE bf, block_t prog){
-  code_seq main_seq = code_utils_set_up_program();
-  int vars_len_in_bytes = (code_seq_size(main_seq) / 2) * BYTES_PER_WORD;
+  code_seq main seq = code_seq_empty();
+  int code_size_before = code_seq_size(main_seq);
+  //place local variables on the runtime stack
+  main_seq = gen_code_var_decls(prog.var_decls); 
+  //generate code for the block
+  main_seq = code_seq_concat(main_seq, code_utils_save_registers_for_AR());
+  main_seq = code_seq_concat(main_seq, gen_code_stmt(prog.stmts);
+  main_seq = code_seq_concat(main_seq, code_utils_restore_registers_from_AR());
 
-  main_seq code_seq_concat(code_utils_tear_down_program());
+  int code_size_after = cod_seq_size(main_seq);
+  int code_size_block = code_size_after - code_size_before;
+  main_seq = code_seq_concat(main_seq, code_utils_deallocate_stack_space(code_size_block));
+  //I'm not sure if the above deallocation is required or even necessary based on his handout
+}//end of gen_code_program
+
+code_seq gen_code_var_decls(var_decls_t vars){
+
 }
