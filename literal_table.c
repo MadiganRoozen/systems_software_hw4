@@ -42,14 +42,14 @@ table_entry literal_table_contains(const char *target, literal_value value){
 
     table_entry cur = first;
     while(cur != NULL){
-        //if the target text and the constant value match, return true
+        //if the target text and the constant value match, return table entry
         if(strcmp(target, cur->text) == 0 && cur->value == value){
             return cur;
         }
         //move to the next entry
         cur = cur->next;
     }
-    //if the entry was not found, return -1
+    //if the entry was not found, return null
     printf("entry not in table")
     return NULL;
 }
@@ -67,7 +67,13 @@ int literal_table_get_offset(const char *target, literal_value value){
 
 }
 
-void literal_table_add(const char *val_string, literal_value value){
-    //gotta figure out how to get the offset into the table entry
+void literal_table_add(const char *val_string, literal_value newValue, int newOffset){
+    table_entry *newEntry = malloc(sizeof(table_entry));
+    newEntry->next = null;
+    newEntry->text = val_string;
+    newEntry->value = newValue;
+    newEntry->offset = newOffset;
+    last->next = newEntry;
+    last = newEntry;
 }
 
