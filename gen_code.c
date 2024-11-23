@@ -7,6 +7,10 @@
 #include "symtab.h"
 #include "gen_code.h"
 
-extern void gen_code_initialize(){}
+extern void gen_code_initialize(){
+  
+}
 
-extern void gen_code_program(BOFFILE bf, block_t prog){}
+extern void gen_code_program(BOFFILE bf, block_t prog){
+  
+}
