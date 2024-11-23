@@ -22,7 +22,7 @@ typedef struct table_entry{
 
 static table_entry *first;
 static table_entry *last;
-
+int global_data_offset = 0;
 
 // initialize the literal_table
 void literal_table_initialize()
@@ -67,13 +67,19 @@ int literal_table_get_offset(const char *target, literal_value value){
 
 }
 
-void literal_table_add(const char *val_string, literal_value newValue, int newOffset){
+void literal_table_add(const char *val_string, literal_value newValue){
     table_entry *newEntry = malloc(sizeof(table_entry));
     newEntry->next = null;
     newEntry->text = val_string;
     newEntry->value = newValue;
-    newEntry->offset = newOffset;
-    last->next = newEntry;
-    last = newEntry;
+    newEntry->offset = global_data_offset;
+    if(literal_table_empty()) {
+        first = newEntry;
+        last = newEntry;
+    } else {
+        last->next = newEntry;
+        last = newEntry;
+    }
+    global_data_offset++;
 }
 
