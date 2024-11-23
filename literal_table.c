@@ -37,6 +37,10 @@ bool literal_table_empty(){
     else return false;
 }
 
+unsigned int literal_table_size(){
+    return global_data_offset;
+}
+
 table_entry literal_table_contains(const char *target, literal_value value){
     if(literal_table_empty()) return NULL;
 
