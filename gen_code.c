@@ -1,12 +1,15 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include <limits.h>
 #include <string.h>
-#include "bof.h"
 #include "ast.h"
-#include "utilities.h"
-#include "symtab.h"
-#include "gen_code.h"
+#include "code.h"
+#include "id_use.h"
 #include "literal_table.h"
+#include "gen_code.h"
+#include "utilities.h"
+#include "regname.h"
+#include "code_seq.h"
+
+#define STACK_SPACE 4096
 
 extern void gen_code_initialize(){
   literal_table_initialize();
@@ -18,7 +21,7 @@ static void gen_code_output_seq(BOFFILE bf, code_seq sequence){
   while(!code_seq_is_empty(sequence)){
     bin_instr_t inst = code_seq_first(sequence)->instr;
     instruction_write_bin_instr(bf, inst);
-    sequence = code_seq_rest(cs);
+    sequence = code_seq_rest(sequence);
   }
 }//end of gen_code_output_seq
 
@@ -41,6 +44,7 @@ static void gen_code_output_literals(BOFFILE bf){
   while(literal_table_iteration_has_next()) {
     word_type lit = literal_table_iteration_next();
     bof_write_word(bf, lit);
+  }
 }//end of gen_code_output_literals
 
 static void gen_code_output_program(BOFFILE bf, code_seq main_sequence){
@@ -51,7 +55,7 @@ static void gen_code_output_program(BOFFILE bf, code_seq main_sequence){
   bof_close(bf);
 }//end of gen_code_output_program
 
-void gen_code_program(BOFFILE bf, program_t prog){
+void gen_code_program(BOFFILE bf, block_t prog){
   code_seq main_seq = code_utils_set_up_program();
   int vars_len_in_bytes = (code_seq_size(main_seq) / 2) * BYTES_PER_WORD;
 

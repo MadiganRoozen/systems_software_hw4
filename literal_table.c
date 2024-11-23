@@ -5,18 +5,11 @@
 #include "utilities.h"
 #include "literal_table.h"
 
-//union is used so the literal table can contain int or string values easily
-//there may be a better solution ot this is the machine_types file
-typedef union literal_value {
-    int int_val;             
-    const char *str_val;     
-} literal_value;
-
 //table entries
 typedef struct table_entry{
     struct table_entry *next; //next entry in the table as this is a linked list
     const char *text; //text representation of the constant's value ("42" or "Hello")
-    literal_value value; //actual constant value
+    word_type value; //actual constant value
     int offset; //offset number
 } table_entry;
 
@@ -24,11 +17,14 @@ static table_entry *first;
 static table_entry *last;
 int global_data_offset = 0;
 
+static table_entry *iteration_next;
+
 // initialize the literal_table
 void literal_table_initialize()
 {
     first = NULL;
     last = NULL;
+    iteration_next = NULL;
 }
 
 //if the first node is empty, the table is empty
@@ -41,24 +37,23 @@ unsigned int literal_table_size(){
     return global_data_offset;
 }
 
-table_entry literal_table_contains(const char *target, literal_value value){
+bool literal_table_contains(const char *target, word_type value){
     if(literal_table_empty()) return NULL;
 
     table_entry cur = first;
     while(cur != NULL){
         //if the target text and the constant value match, return table entry
         if(strcmp(target, cur->text) == 0 && cur->value == value){
-            return cur;
+            return true;
         }
         //move to the next entry
         cur = cur->next;
     }
-    //if the entry was not found, return null
-    printf("entry not in table")
-    return NULL;
+    //if the entry was not found, return false
+    return false;
 }
 
-int literal_table_get_offset(const char *target, literal_value value){
+int literal_table_get_offset(const char *target, word_type value){
     //if there is nothing in the table or the value isnt in the table, return -1
     if(literal_table_empty()) return -1;
 
@@ -71,7 +66,7 @@ int literal_table_get_offset(const char *target, literal_value value){
 
 }
 
-void literal_table_add(const char *val_string, literal_value newValue){
+void literal_table_add(const char *val_string, word_type newValue){
     table_entry *newEntry = malloc(sizeof(table_entry));
     newEntry->next = null;
     newEntry->text = val_string;
@@ -85,5 +80,31 @@ void literal_table_add(const char *val_string, literal_value newValue){
         last = newEntry;
     }
     global_data_offset++;
+}
+
+void literal_table_start_iteration()
+{
+    iteration_next = first;
+}
+
+bool literal_table_iteration_has_next()
+{
+    if(iteration_next == NULL){
+        return false;
+    }
+    if(iteration_next->next == NULL){
+        return false;
+    }
+    return true;
+}
+
+word_type literal_table_iteration_next()
+{
+    //return 0 if the iterator is on a NULL node
+    if(iteration_next==NULL) return 0;
+    //returns the value from the current iteration node and moves to the next one
+    word_type val = iteration_next->value;
+    iteration_next = iteration_next->next;
+    return val;
 }
 

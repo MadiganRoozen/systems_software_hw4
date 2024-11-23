@@ -1,10 +1,9 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "bof.h"
 #include "ast.h"
-#include "utilities.h"
-#include "symtab.h"
+#include "bof.h"
+#include "instruction.h"
+#include "code.h"
+#include "code_seq.h"
 
 //these are both called in compiler_main.c
 extern void gen_code_initialize();
