@@ -14,7 +14,6 @@
 
 extern void gen_code_initialize(){
   literal_table_initialize();
-  code_seq main_seq = code_utils_set_up_program();
 }
 
 //bf must be open for writing in binary, parser must have completed scope
@@ -58,21 +57,35 @@ static void gen_code_output_program(BOFFILE bf, code_seq main_sequence){
 }//end of gen_code_output_program
 
 void gen_code_program(BOFFILE bf, block_t prog){
-  code_seq main seq = code_seq_empty();
-  int code_size_before = code_seq_size(main_seq);
+  code_seq main_seq = code_utils_set_up_program();
   //place local variables on the runtime stack
   main_seq = gen_code_var_decls(prog.var_decls); 
   //generate code for the block
-  main_seq = code_seq_concat(main_seq, code_utils_save_registers_for_AR());
   main_seq = code_seq_concat(main_seq, gen_code_stmt(prog.stmts);
-  main_seq = code_seq_concat(main_seq, code_utils_restore_registers_from_AR());
-
-  int code_size_after = cod_seq_size(main_seq);
-  int code_size_block = code_size_after - code_size_before;
-  main_seq = code_seq_concat(main_seq, code_utils_deallocate_stack_space(code_size_block));
-  //I'm not sure if the above deallocation is required or even necessary based on his handout
+  main_seq = code_seq_concat(main_seq, code_utils_tear_dowwn_program();
+  gen_code_output_program(bf, main_seq);
 }//end of gen_code_program
 
 code_seq gen_code_var_decls(var_decls_t vars){
+  code_seq ret = code_seq_empty();
+  var_decl_t *var_inst = vars.var_decls;
+  while(var != NULL) {
+   ret = code_seq_concat(gen_code_var_decl(*var_inst), ret);//not sure why these are in reverse order
+   var_inst = var_inst->next;
+  }
+ return ret;
+}//end of gen_code_var_decls
 
-}
+code_seq gen_code_var_decl(var_decl_t var) {
+ return gen_code_idents(var.idents, var.type);
+}//end of gen_code_var_decl
+
+code_seq gen_code_idents(idents_t idents, AST_type vt) {
+ code_seq ret = code_seq_empty();
+ ident_t idptr = idents.ident;
+ while(idptr != NULL) {
+  code_seq alloc_and_init = code_seq_singleton(code_addi(SP, SP, -BYTES_PER_WORD));
+  switch(vt) {
+   case()
+ }
+}//end of gen_code_idents
