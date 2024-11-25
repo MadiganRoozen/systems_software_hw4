@@ -77,10 +77,11 @@ code_seq gen_code_var_decls(var_decls_t vars){
 }//end of gen_code_var_decls
 
 code_seq gen_code_var_decl(var_decl_t var) {
-  return gen_code_idents(var.idents, var.type);
+  
+ return gen_code_idents(var.idents, var.type);
 }//end of gen_code_var_decl
 
-code_seq gen_code_idents(idents_t idents, AST_type vt) {
+/*code_seq gen_code_idents(idents_t idents, AST_type vt) {
  code_seq ret = code_seq_empty();
  ident_t idptr = idents.ident;
  while(idptr != NULL) {
@@ -88,7 +89,7 @@ code_seq gen_code_idents(idents_t idents, AST_type vt) {
   switch(vt) {
    case()
  }
-}//end of gen_code_idents
+}//end of gen_code_idents*/
 
 code_seq gen_code_stmt(stmt_t stmt) {
    switch(stmt.stmt_kind){
