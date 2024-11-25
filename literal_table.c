@@ -37,20 +37,20 @@ unsigned int literal_table_size(){
     return global_data_offset;
 }
 
-bool literal_table_contains(const char *target, word_type value){
+table_entry literal_table_contains(const char *target, word_type value){
     if(literal_table_empty()) return NULL;
 
     table_entry cur = first;
     while(cur != NULL){
         //if the target text and the constant value match, return table entry
         if(strcmp(target, cur->text) == 0 && cur->value == value){
-            return true;
+            return cur;
         }
         //move to the next entry
         cur = cur->next;
     }
     //if the entry was not found, return false
-    return false;
+    return NULL;
 }
 
 int literal_table_get_offset(const char *target, word_type value){
@@ -68,7 +68,7 @@ int literal_table_get_offset(const char *target, word_type value){
 
 void literal_table_add(const char *val_string, word_type newValue){
     table_entry *newEntry = malloc(sizeof(table_entry));
-    newEntry->next = null;
+    newEntry->next = NULL;
     newEntry->text = val_string;
     newEntry->value = newValue;
     newEntry->offset = global_data_offset;
@@ -91,10 +91,10 @@ bool literal_table_iteration_has_next()
 {
     if(iteration_next == NULL){
         return false;
-    }
+    }/*
     if(iteration_next->next == NULL){
         return false;
-    }
+    }*/
     return true;
 }
 
