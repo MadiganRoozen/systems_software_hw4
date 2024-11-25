@@ -34,8 +34,8 @@ static BOFHeader gen_code_program_header(code_seq main_sequence){
   int data_start_addr = MAX(ret.text_length, 1024) * BYTES_PER_WORD;
   ret.data_start_address = data_start_addr;
   ret.data_length = literal_table_size() * BYTES_PER_WORD;
-  int stack_bottom_address = data_start_addr + ret.data_start_address + ret.data_length + STACK_SPACE;
-  ret.stack_bottom_addr = stack_bottom_address;
+  //int stack_bottom_address = data_start_addr + ret.data_start_address + ret.data_length + STACK_SPACE;
+  ret.stack_bottom_addr = 32768 * BYTES_PER_WORD; //FP and SP start point
   
   return ret;
 }//end of gen_code_program_header
@@ -62,7 +62,7 @@ void gen_code_program(BOFFILE bf, block_t prog){
   main_seq = gen_code_var_decls(prog.var_decls); 
   //generate code for the block
   main_seq = code_seq_concat(main_seq, gen_code_stmt(prog.stmts);
-  main_seq = code_seq_concat(main_seq, code_utils_tear_dowwn_program();
+  main_seq = code_seq_concat(main_seq, code_utils_tear_down_program();
   gen_code_output_program(bf, main_seq);
 }//end of gen_code_program
 
