@@ -9,3 +9,7 @@
 extern void gen_code_initialize();
 
 extern void gen_code_program(BOFFILE bf, block_t prog);
+
+extern code_seq gen_code_var_decls(var_decls_t vars);
+
+extern code_seq gen_code_var_decl(var_decl_t var);

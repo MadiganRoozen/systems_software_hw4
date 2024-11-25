@@ -61,16 +61,16 @@ void gen_code_program(BOFFILE bf, block_t prog){
   //place local variables on the runtime stack
   main_seq = gen_code_var_decls(prog.var_decls); 
   //generate code for the block
-  main_seq = code_seq_concat(main_seq, gen_code_stmt(prog.stmts);
-  main_seq = code_seq_concat(main_seq, code_utils_tear_down_program();
+  code_seq_concat(&main_seq, gen_code_stmt(prog.stmts)); //for some reason gen_code_stmt is returning an integer
+  code_seq_concat(&main_seq, code_utils_tear_down_program());
   gen_code_output_program(bf, main_seq);
 }//end of gen_code_program
 
 code_seq gen_code_var_decls(var_decls_t vars){
   code_seq ret = code_seq_empty();
   var_decl_t *var_inst = vars.var_decls;
-  while(var != NULL) {
-   ret = code_seq_concat(gen_code_var_decl(*var_inst), ret);//not sure why these are in reverse order
+  while(var_inst != NULL) { //changed this form var to var_inst bc it was giving an error -madigan 11/25
+   code_seq_concat(&ret, gen_code_var_decl(*var_inst));//not sure why these are in reverse order //changed it-madigan 11/25
    var_inst = var_inst->next;
   }
  return ret;
@@ -78,9 +78,10 @@ code_seq gen_code_var_decls(var_decls_t vars){
 
 code_seq gen_code_var_decl(var_decl_t var) {
   
- return gen_code_idents(var.idents, var.type);
+ return gen_code_idents(var.ident_list, var.type_tag);
 }//end of gen_code_var_decl
 
+//figure this out later
 /*code_seq gen_code_idents(idents_t idents, AST_type vt) {
  code_seq ret = code_seq_empty();
  ident_t idptr = idents.ident;
@@ -127,7 +128,7 @@ code_seq gen_code_assign_stmt(assign_stmt_t stmt){
    assert(stmt.idu != NULL);
    assert(id_use_get_attrs(stmt.idu) != NULL);
    id_kind kind = id_use_get_attrs(stmt.idu)->kind;
-   ret = code_seq_concat(ret, /*SOMETHING GOES HERE*/);
+   code_seq_concat(&ret, /*SOMETHING GOES HERE*/);
  
    return ret;
 }//end of gen_code_assign_stmt
@@ -136,9 +137,33 @@ code_seq gen_code_call_stmt(call_stmt_t stmt){
    
 }//end of gen_code_call_stmt
 
-code_seq gen_code_if_stmt(if_stmt_t stmt){
-   code_seq ret = gen_code_condition(stmt.condition);
-   ret = code_seq_concat(ret, 
+code_seq gen_code_condition(condition_t con)
+{
+  switch (con.cond_kind) {
+  case ck_db:
+	  return; //return something idk what
+	  break;
+  case ck_rel:
+	  return;  //return something idk what
+  default:
+	  break;
+  }
+  return code_seq_empty();
+}
+
+// Generate code for the if-statment given by stmt
+code_seq gen_code_if_stmt(if_stmt_t stmt)
+{
+    // put truth value of stmt.expr in $v0
+    code_seq ret = gen_code_condition(stmt.condition);
+    //somehow load the condition into the stack at v0, this is just taken from the professors website
+    code_seq_concat(&ret, code_pop_stack_into_reg(V0, bool_te));
+    code_seq body = gen_code_stmt(*stmt.then_stmts);
+    int body_len = code_seq_size(body);
+    // skip over body if $v0 contains false
+    code_seq_add_to_end(&ret,code_beq(V0, 0, body_len));
+    code_seq_concat(&ret, body);
+    return ret;
 }//end of gen_code_if_stmt
 
 code_seq gen_code_while_stmt(while_stmt_t stmt){
