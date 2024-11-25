@@ -77,7 +77,7 @@ code_seq gen_code_var_decls(var_decls_t vars){
 }//end of gen_code_var_decls
 
 code_seq gen_code_var_decl(var_decl_t var) {
- return gen_code_idents(var.idents, var.type);
+  return gen_code_idents(var.idents, var.type);
 }//end of gen_code_var_decl
 
 code_seq gen_code_idents(idents_t idents, AST_type vt) {
@@ -89,3 +89,77 @@ code_seq gen_code_idents(idents_t idents, AST_type vt) {
    case()
  }
 }//end of gen_code_idents
+
+code_seq gen_code_stmt(stmt_t stmt) {
+   switch(stmt.stmt_kind){
+      case assign_stmt:
+         return gen_code_assign_stmt(stmt.data.assign_stmt);
+         break;
+      case call_stmt:
+         return gen_code_call_stmt(stmt.data.call_stmt);
+         break;
+      case if_stmt:
+         return gen_code_if_stmt(stmt.data.if_stmt);
+         break;
+      case while_stmt:
+         return gen_code_while_stmt(stmt.data.while_stmt);
+         break;
+    case read_stmt:
+         return gen_code_read_stmt(stmt.data.read_stmt);
+         break;
+    case print_stmt:
+         return gen_code_print_stmt(stmt.data.print_stmt);
+         break;
+    case block_stmt:
+         return gen_code_block_stmt(stmt.data.block_stmt);
+         break;
+    default:
+        bail_with_error("Call to gen_code_stmt with an AST that is not a statement!");
+        break;
+   }
+ return code_seq_empty();
+}//end of gen_code_stmt
+
+code_seq gen_code_assign_stmt(assign_stmt_t stmt){
+   code_seq ret;
+   ret = gen_code_expr(*(stmt.expr));
+   assert(stmt.idu != NULL);
+   assert(id_use_get_attrs(stmt.idu) != NULL);
+   id_kind kind = id_use_get_attrs(stmt.idu)->kind;
+   ret = code_seq_concat(ret, /*SOMETHING GOES HERE*/);
+ 
+   return ret;
+}//end of gen_code_assign_stmt
+
+code_seq gen_code_call_stmt(call_stmt_t stmt){
+   
+}//end of gen_code_call_stmt
+
+code_seq gen_code_if_stmt(if_stmt_t stmt){
+   code_seq ret = gen_code_condition(stmt.condition);
+   ret = code_seq_concat(ret, 
+}//end of gen_code_if_stmt
+
+code_seq gen_code_while_stmt(while_stmt_t stmt){
+ 
+}//end of gen_code_while_stmt
+
+code_seq gen_code_read_stmt(read_stmt_t stmt){
+ 
+}//end of gen_code_read_stmt
+
+code_seq gen_code_print_stmt(print_stmt_t stmt){
+ 
+}//end of gen_code_print_stmt
+
+code_seq gen_code_block_stmt(block_stmt_t stmt){
+ 
+}//end of gen_code_block_stmt
+
+code_seq gen_code_expr(expr_t expr){
+   switch(
+}//end of gen_code_expr
+
+code_seq gen_code_binary_op_expr(binary_op_expr_t exp){
+ 
+}//end of gen_code_binary_op_expr
