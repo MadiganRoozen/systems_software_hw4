@@ -75,7 +75,7 @@ code_seq gen_code_var_decls(var_decls_t vars){
    		var_inst = var_inst->next;
 		//adjust FP down
 		code_seq_add_to_end(&ret, code_sri(SP, 1));
-		code_seq_add_to_end(&ret, code_cpr(3, FP));
+		code_seq_add_to_end(&ret, code_cpr(SP, FP));
 	}
  return ret;
 }//end of gen_code_var_decls
