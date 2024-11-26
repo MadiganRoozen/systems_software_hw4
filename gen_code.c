@@ -9,6 +9,7 @@
 #include "regname.h"
 #include "code_seq.h"
 #include "code_utils.h"
+#include "regname.h"
 
 #define STACK_SPACE 4096
 
@@ -67,30 +68,32 @@ void gen_code_program(BOFFILE bf, block_t prog){
 }//end of gen_code_program
 
 code_seq gen_code_var_decls(var_decls_t vars){
-  code_seq ret = code_seq_empty();
-  var_decl_t *var_inst = vars.var_decls;
-  while(var_inst != NULL) { //changed this form var to var_inst bc it was giving an error -madigan 11/25
-   code_seq_concat(&ret, gen_code_var_decl(*var_inst));//not sure why these are in reverse order //changed it-madigan 11/25
-   var_inst = var_inst->next;
-  }
+	code_seq ret = code_seq_empty();
+	var_decl_t *var_inst = vars.var_decls;
+	while(var_inst != NULL) { //changed this form var to var_inst bc it was giving an error -madigan 11/25
+   		code_seq_concat(&ret, gen_code_var_decl(*var_inst));//not sure why these are in reverse order //changed it-madigan 11/25
+   		var_inst = var_inst->next;
+		//adjust FP down
+		code_seq_add_to_end(&ret, code_sri(SP, 1));
+		code_seq_add_to_end(&ret, code_cpr(3, FP));
+	}
  return ret;
 }//end of gen_code_var_decls
 
 code_seq gen_code_var_decl(var_decl_t var) {
-  
- return gen_code_idents(var.ident_list, var.type_tag);
+  	return gen_code_idents(var.ident_list);
 }//end of gen_code_var_decl
 
 //figure this out later
-/*code_seq gen_code_idents(idents_t idents, AST_type vt) {
- code_seq ret = code_seq_empty();
- ident_t idptr = idents.ident;
- while(idptr != NULL) {
-  code_seq alloc_and_init = code_seq_singleton(code_addi(SP, SP, -BYTES_PER_WORD));
-  switch(vt) {
-   case()
- }
-}//end of gen_code_idents*/
+code_seq gen_code_idents(ident_list_t idents) {
+	ident_t* idptr = idents.start;
+	id_use* id = idptr->idu;
+ 	int levout = id->levelsOutward;//someone please double check my pointer shenanigans -caitlin
+	int offset = id->attrs->offset_count;
+	code_seq ret = code_utils_compute_fp(3, levout);
+	ret = code_seq_add_to_end(&ret, code_cpw(SP, 0, 3, offset);
+	return ret;
+}//end of gen_code_idents
 
 code_seq gen_code_stmt(stmt_t stmt) {
    switch(stmt.stmt_kind){
