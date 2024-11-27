@@ -142,14 +142,7 @@ code_seq gen_code_assign_stmt(assign_stmt_t stmt){
 }//end of gen_code_assign_stmt
 
 code_seq gen_code_call_stmt(call_stmt_t stmt){
-   code_seq ret = code_seq_empty();
-   /*call_stmt_t has file_location, AST_type(call_stmt_ast), string, and id_use*
-   */
-   //somehow we need to pull an address_type OPTIONS:
-   //this one comes from scope.h and appears to be the only option
-   address_type addr = scope_loc_count(/*scope_t*/);
-   code_seq_add_to_end(&ret, code_call(/*address_type*/));
-   return ret;
+   return code_seq_empty();
 }//end of gen_code_call_stmt
 
 // Generate code for the if-statment given by stmt
@@ -174,8 +167,17 @@ code_seq gen_code_while_stmt(while_stmt_t stmt){
 }//end of gen_code_while_stmt
 
 code_seq gen_code_read_stmt(read_stmt_t stmt){
-    code_seq ret = code_seq_empty();
-	
+    code_seq ret = code_seq_singleton(code_sri(SP, 1));
+    int read_value = getc(stdin);
+    code_seq_add_to_end(&ret, code_lit(SP, 0, read_value));
+    //find variable
+    id_use* id = stmt.idu;
+    int levout = id->levelsOutward;//someone please double check my pointer shenanigans -caitlin
+    int offset = id->attrs->offset_count;
+    code_seq ret = code_utils_compute_fp(3, levout);
+    code_seq_add_to_end(&ret, code_cpw(3, offset, SP, 0));
+    code_seq_add_to_end(&ret, code_ari(SP, 1));
+    
     return ret;
 }//end of gen_code_read_stmt
 
