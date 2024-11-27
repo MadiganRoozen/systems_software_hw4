@@ -1,4 +1,4 @@
-#include <limits.h>
+ #include <limits.h>
 #include <string.h>
 #include "ast.h"
 #include "code.h"
@@ -98,7 +98,7 @@ code_seq gen_code_const_def_list(const_def_list_t con_def){
     code_seq ret = code_seq_empty();
     const_def_t * cur_const = con_def->start;
     while(cur_const != NULL){
-        code_seq_concat(&ret, gen_code_const_def(cur_const));
+        ret = code_seq_concat(&ret, gen_code_const_def(cur_const));
         cur_const = cur_const->next;
     }
     return ret;
@@ -122,6 +122,20 @@ code_seq gen_code_idents(ident_list_t idents) {
 	ret = code_seq_add_to_end(&ret, code_cpw(SP, 0, 3, offset));
 	return ret;
 }//end of gen_code_idents
+
+code_seq gen_code_stmts(stmts_t stmt){
+    return gen_code_stmt_list(stmt.stmt_list);
+}
+
+code_seq gen_code_stmt_list(stmt_list_t stmt){
+    stmt_t *cur = stmt.start;
+    code_seq ret = code_seq_empty();
+    while(cur != NULL){
+        code_seq_concat(&ret, gen_code_stmt(&cur));
+        cur = cur->next;
+    }
+    return ret;
+}
 
 code_seq gen_code_stmt(stmt_t stmt) {
    switch(stmt.stmt_kind){
@@ -181,17 +195,17 @@ code_seq gen_code_call_stmt(call_stmt_t stmt){
 }//end of gen_code_call_stmt
 
 // Generate code for the if-statment given by stmt
-code_seq gen_code_if_stmt(if_stmt_t stmt)
-{
-    // put truth value of stmt.expr in $v0
-    code_seq ret = gen_code_condition(stmt.condition);
-    //somehow load the condition into the stack at v0, this is just taken from the professors website
-    code_seq_concat(&ret, code_pop_stack_into_reg(V0, bool_te));
-    code_seq body = gen_code_stmt(*stmt.then_stmts);
-    int body_len = code_seq_size(body);
-    // skip over body if $v0 contains false
-    code_seq_add_to_end(&ret,code_beq(V0, 0, body_len));
-    code_seq_concat(&ret, body);
+code_seq gen_code_if_stmt(if_stmt_t stmt) {
+    code_seq_ret = code_seq_empty();
+    code_seq then_body = gen_code_stmts(stmt.then_stmts);
+    int then_length = code_seq_size(then_body);
+    code_seq else_body = gen_code_stmts(stms.else_stmts);
+    int else_length = code_seq_size(else_body);
+    code_seq_concat(&ret, gen_code_condition(stmt.condition));
+    code_seq_add_to_end(&ret, code_jmpa((address_type) else_length));
+    code_seq_concat(&ret, then_body);
+    code_seq_concat(&ret, else_body);
+
     return ret;
 }//end of gen_code_if_stmt
 
@@ -256,7 +270,7 @@ code_seq gen_code_db_condition(db_condition_t db_con, address_type ret_addr){
     assert(db_con.divisor.data != NULL);
     assert(db_con.divisor.data.value != 0);
     code_seq ret = gen_code_expr(db_con.dividend);
-    code_seq_concat(&ret, gen_code_expr(db_con.divisor));
+    ret = code_seq_concat(&ret, gen_code_expr(db_con.divisor));
     code_seq_add_to_end(&ret, code_div(SP, 0));
     //not totally sure how div works, so this is probably wrong - caitlin
     return ret
@@ -264,7 +278,7 @@ code_seq gen_code_db_condition(db_condition_t db_con, address_type ret_addr){
 
 code_seq gen_code_rel_op_condition(rel_op_condition_t relop_con, address_type ret_addr){
     code_seq ret = gen_code_expr(relop_con.expr1);
-    code_seq_concat(&ret, gen_code_expr(relop_con.expr2))
+    ret = code_seq_concat(&ret, gen_code_expr(relop_con.expr2))
     char *comparison = relop_con.rel_op.text;
     if(strcmp(comparison, "==") == 0){
         if(relop_con.expr1.data.number == relop_con.expr2.data.number){
@@ -318,7 +332,7 @@ code_seq gen_code_expr(expr_t expr){
 
 code_seq gen_code_binary_op_expr(binary_op_expr_t bin){
     code_seq ret = gen_code_expr(bin.expr2);
-    code_seq_concat(&ret, gen_code_expr(bin.expr1);)
+    ret = code_seq_concat(&ret, gen_code_expr(bin.expr1);)
     char * comparison = bin.arith_op.text;
     if(strcmp(comparison, "+") == 0){
         code_seq_add_to_end(&ret, code_add(SP, 0, SP, 1));
