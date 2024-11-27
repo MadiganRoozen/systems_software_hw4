@@ -168,9 +168,8 @@ code_seq gen_code_if_stmt(if_stmt_t stmt)
 }//end of gen_code_if_stmt
 
 code_seq gen_code_while_stmt(while_stmt_t stmt){
-    address_type ret_addr = memory[SP];
-    //if we can think of a better way to get at the current SP value, please edit -caitlin
     code_seq ret = code_seq_concat(&ret, gen_code_block_stmt);
+    address_type ret_addr = code_seq_size(ret);
     ret = gen_code_condition(stmt.condition, ret_addr);
     return ret;
 }//end of gen_code_while_stmt
