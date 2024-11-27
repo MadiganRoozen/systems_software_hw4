@@ -198,11 +198,13 @@ code_seq gen_code_call_stmt(call_stmt_t stmt){
 code_seq gen_code_if_stmt(if_stmt_t stmt) {
     code_seq_ret = code_seq_empty();
     code_seq then_body = gen_code_stmts(stmt.then_stmts);
-    int then_length = code_seq_size(then_body);
     code_seq else_body = gen_code_stmts(stms.else_stmts);
     int else_length = code_seq_size(else_body);
-    code_seq_concat(&ret, gen_code_condition(stmt.condition));
-    code_seq_add_to_end(&ret, code_jmpa((address_type) else_length));
+    //append instruction to the end of then_body to jump past else_body upon completion
+    code_seq_add_to_end(&then_body, code_jmpa((address_type) else_length + 1));
+    int then_length = code_seq_size(then_body);
+    //might need to change gen_code_condition to accept an address_type arg
+    code_seq_concat(&ret, gen_code_condition(stmt.condition, then_body));
     code_seq_concat(&ret, then_body);
     code_seq_concat(&ret, else_body);
 
@@ -256,7 +258,7 @@ code_seq gen_code_condition(condition_t con, address_type ret_addr)
 {
   switch (con.cond_kind) {
   case ck_db:
-	  return gen_code_db_condition(con.data); 
+	  return gen_code_db_condition(con.data, ret_addr); 
 	  break;
   case ck_rel:
 	  return gen_code_rel_op_condition(con.data, ret_addr);
@@ -273,6 +275,10 @@ code_seq gen_code_db_condition(db_condition_t db_con, address_type ret_addr){
     ret = code_seq_concat(&ret, gen_code_expr(db_con.divisor));
     code_seq_add_to_end(&ret, code_div(SP, 0));
     //not totally sure how div works, so this is probably wrong - caitlin
+    //needs something to pull hi into stack (or into reg)
+    //then a bne if hi = 0 //true, increment PC by 1
+    //Bne will do PC = (PC-1) + 3rd argument
+    code_seq_add_to_end(&ret, code_bne(SP, -1, ret_addr));
     return ret
 }
 
@@ -281,34 +287,31 @@ code_seq gen_code_rel_op_condition(rel_op_condition_t relop_con, address_type re
     ret = code_seq_concat(&ret, gen_code_expr(relop_con.expr2))
     char *comparison = relop_con.rel_op.text;
     if(strcmp(comparison, "==") == 0){
-        if(relop_con.expr1.data.number == relop_con.expr2.data.number){
-            code_seq_add_to_end(&ret, code_lit(SP, -1, 1));
-        } else code_seq_add_to_end(&ret, code_lit(SP, -1, 0));
-        code_seq_add_to_end(&ret, code_beq(SP, 1, 1));
+        code_seq_add_to_end(&ret, code_bne(SP, 1, ret_addr));
         //I put 1 for i, because I think this belongs at the end of while loops
         //and should go to the next instr for an if statement -caitlin
     } else if(strcmp(comparison, "!=") == 0){
-        code_seq_add_to_end(&ret, code_bne(SP, 1, 1));
+        code_seq_add_to_end(&ret, code_beq(SP, 1, ret_addr));
     } else if(strcmp(comparison, "<") == 0){
         //make expr1-expr2 so that can be compared to 0
         code_seq_add_to_end(&ret, code_ari(SP, 1));
         code_seq_add_to_end(&ret, code_sub(SP, 0, SP, -1));
-        code_seq_add_to_end(&ret, code_bltz(SP, 0, 1));
+        code_seq_add_to_end(&ret, code_bgez(SP, 0, ret_addr));
     } else if(strcmp(comparison, "<=") == 0){
         //make expr1-expr2 so that can be compared to 0
         code_seq_add_to_end(&ret, code_ari(SP, 1));
         code_seq_add_to_end(&ret, code_sub(SP, 0, SP, -1));
-        code_seq_add_to_end(&ret, code_blez(SP, 0, 1));
+        code_seq_add_to_end(&ret, code_bgtz(SP, 0, ret_addr));
     } else if(strcmp(comparison, ">") == 0){
         //make expr1-expr2 so that can be compared to 0
         code_seq_add_to_end(&ret, code_ari(SP, 1));
         code_seq_add_to_end(&ret, code_sub(SP, 0, SP, -1));
-        code_seq_add_to_end(&ret, code_bgtz(SP, 0, 1));
+        code_seq_add_to_end(&ret, code_blez(SP, 0, ret_addr));
     } else if(strcmp(comparison, ">=") == 0){
         //make expr1-expr2 so that can be compared to 0
         code_seq_add_to_end(&ret, code_ari(SP, 1));
         code_seq_add_to_end(&ret, code_sub(SP, 0, SP, -1));
-        code_seq_add_to_end(&ret, code_bgez(SP, 0, 1));
+        code_seq_add_to_end(&ret, code_bltz(SP, 0, ret_addr));
     } else bail_with_error("Invalid Rel_Op token.");
 } 
 
@@ -316,16 +319,16 @@ code_seq gen_code_expr(expr_t expr){
     code_seq ret = code_seq_empty();
     switch(expr.expr_kind){
         case expr_bin:
-            return gen_code_binary_op_expr(expr.data);//maybe this should be expr.binary instead -caitlin
+            return gen_code_binary_op_expr(expr.data.binary);//maybe this should be expr.binary instead -caitlin
             break;
         case expr_negated:
-            return gen_code_negated_expr(expr.data);
+            return gen_code_negated_expr(expr.data.negated);
             break;
         case expr_ident:
-            return gen_code_idents(expr.data);
+            return gen_code_idents(expr.data.ident);
             break;
         case expr_number:
-            return gen_code_number(expr.data);
+            return gen_code_number(expr.data.number);
     }
     return ret;
 }//end of gen_code_expr
@@ -349,15 +352,11 @@ code_seq gen_code_binary_op_expr(binary_op_expr_t bin){
 }//end of gen_code_binary_op_expr
 
 code_seq gen_code_negated_expr(negated_expr_t neg){
-    code_seq ret = code_seq_empty();
-    code_seq_add_to_end(&ret, code_neg(SP, 0, SP, 0));
-
-    return ret;
+    return code_seq_singleton(code_neg(SP, 0, SP, 0));
 }
 
 code_seq gen_code_number(number_t num){
-    code_seq ret = code_seq_empty();
-    code_seq_add_to_end(&ret, code_sri(SP, 1));
+    code_seq ret = code_seq_singleton(code_sri(SP, 1));
     code_seq_add_to_end(&ret, code_lit(SP, 0, num.value));
 
     return ret;
