@@ -98,7 +98,7 @@ code_seq gen_code_const_def_list(const_def_list_t con_def){
     code_seq ret = code_seq_empty();
     const_def_t * cur_const = con_def->start;
     while(cur_const != NULL){
-        ret = code_seq_concat(&ret, gen_code_const_def(cur_const));
+        code_seq_concat(&ret, gen_code_const_def(cur_const));
         cur_const = cur_const->next;
     }
     return ret;
@@ -256,7 +256,7 @@ code_seq gen_code_db_condition(db_condition_t db_con, address_type ret_addr){
     assert(db_con.divisor.data != NULL);
     assert(db_con.divisor.data.value != 0);
     code_seq ret = gen_code_expr(db_con.dividend);
-    ret = code_seq_concat(&ret, gen_code_expr(db_con.divisor));
+    code_seq_concat(&ret, gen_code_expr(db_con.divisor));
     code_seq_add_to_end(&ret, code_div(SP, 0));
     //not totally sure how div works, so this is probably wrong - caitlin
     return ret
@@ -264,7 +264,7 @@ code_seq gen_code_db_condition(db_condition_t db_con, address_type ret_addr){
 
 code_seq gen_code_rel_op_condition(rel_op_condition_t relop_con, address_type ret_addr){
     code_seq ret = gen_code_expr(relop_con.expr1);
-    ret = code_seq_concat(&ret, gen_code_expr(relop_con.expr2))
+    code_seq_concat(&ret, gen_code_expr(relop_con.expr2))
     char *comparison = relop_con.rel_op.text;
     if(strcmp(comparison, "==") == 0){
         if(relop_con.expr1.data.number == relop_con.expr2.data.number){
@@ -318,7 +318,7 @@ code_seq gen_code_expr(expr_t expr){
 
 code_seq gen_code_binary_op_expr(binary_op_expr_t bin){
     code_seq ret = gen_code_expr(bin.expr2);
-    ret = code_seq_concat(&ret, gen_code_expr(bin.expr1);)
+    code_seq_concat(&ret, gen_code_expr(bin.expr1);)
     char * comparison = bin.arith_op.text;
     if(strcmp(comparison, "+") == 0){
         code_seq_add_to_end(&ret, code_add(SP, 0, SP, 1));
