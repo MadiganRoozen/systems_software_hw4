@@ -71,7 +71,7 @@ code_seq gen_code_var_decls(var_decls_t vars){
 	code_seq ret = code_seq_empty();
 	var_decl_t *var_inst = vars.var_decls;
 	while(var_inst != NULL) { //changed this form var to var_inst bc it was giving an error -madigan 11/25
-   		code_seq_concat(&ret, gen_code_var_decl(*var_inst));//not sure why these are in reverse order //changed it-madigan 11/25
+   		code_seq_concat(&ret, gen_code_idents(var_inst.ident_list));//not sure why these are in reverse order //changed it-madigan 11/25
    		var_inst = var_inst->next;
 		//adjust FP down
 		code_seq_add_to_end(&ret, code_sri(SP, 1));
@@ -80,9 +80,37 @@ code_seq gen_code_var_decls(var_decls_t vars){
  return ret;
 }//end of gen_code_var_decls
 
-code_seq gen_code_var_decl(var_decl_t var) {
+/*code_seq gen_code_var_decl(var_decl_t var) {
   	return gen_code_idents(var.ident_list);
-}//end of gen_code_var_decl
+}//end of gen_code_var_decl*///I don't think this is necessary -caitlin
+
+code_seq gen_code_const_decls(const_decls_t con){
+    code_seq ret = code_seq_empty();
+    const_decl_t *const_inst = con.const_decls;
+    while(const_inst != NULL) {
+        code_seq_concat(&ret, gen_code_const_def_list(const_inst->const_def_list));
+        const_inst = const_inst->next;
+    }
+    return ret;
+}
+
+code_seq gen_code_const_def_list(const_def_list_t con_def){
+    code_seq ret = code_seq_empty();
+    const_def_t * cur_const = con_def->start;
+    while(cur_const != NULL){
+        ret = code_seq_concat(&ret, gen_code_const_def(cur_const));
+        cur_const = cur_const->next;
+    }
+    return ret;
+}
+
+code_seq gen_code_const_def(const_def_t con_def){
+    int offset = literal_table_get_offset(con_def.ident.name, con_def.number.value);
+    code_seq ret = code_seq_empty();
+    code_seq_add_to_end(&ret, code_sri(SP, 1));
+    code_seq_add_to_end(&ret, code_cpw(GP, offset, SP, 0));
+    return ret;
+}
 
 //figure this out later
 code_seq gen_code_idents(ident_list_t idents) {
@@ -142,7 +170,14 @@ code_seq gen_code_assign_stmt(assign_stmt_t stmt){
 }//end of gen_code_assign_stmt
 
 code_seq gen_code_call_stmt(call_stmt_t stmt){
-   return code_seq_empty();
+   code_seq ret = code_seq_empty();
+   /*call_stmt_t has file_location, AST_type(call_stmt_ast), string, and id_use*
+   */
+   //somehow we need to pull an address_type OPTIONS:
+   //this one comes from scope.h and appears to be the only option
+   address_type addr = scope_loc_count(/*scope_t*/);
+   code_seq_add_to_end(&ret, code_call(/*address_type*/));
+   return ret;
 }//end of gen_code_call_stmt
 
 // Generate code for the if-statment given by stmt
@@ -168,13 +203,13 @@ code_seq gen_code_while_stmt(while_stmt_t stmt){
 
 code_seq gen_code_read_stmt(read_stmt_t stmt){
     code_seq ret = code_seq_singleton(code_sri(SP, 1));
-    int read_value = getc(stdin);
+	int read_value = getc(stdin);
     code_seq_add_to_end(&ret, code_lit(SP, 0, read_value));
     //find variable
     id_use* id = stmt.idu;
-    int levout = id->levelsOutward;//someone please double check my pointer shenanigans -caitlin
-    int offset = id->attrs->offset_count;
-    code_seq ret = code_utils_compute_fp(3, levout);
+ 	int levout = id->levelsOutward;//someone please double check my pointer shenanigans -caitlin
+	int offset = id->attrs->offset_count;
+	code_seq ret = code_utils_compute_fp(3, levout);
     code_seq_add_to_end(&ret, code_cpw(3, offset, SP, 0));
     code_seq_add_to_end(&ret, code_ari(SP, 1));
     
@@ -191,11 +226,13 @@ code_seq gen_code_print_stmt(print_stmt_t stmt){
 }//end of gen_code_print_stmt
 
 code_seq gen_code_block_stmt(block_stmt_t stmt){
-    code_seq ret = code_utils_save_registers_for_AR();
-      //place local variables on the runtime stack
-    main_seq = gen_code_var_decls(prog.var_decls); 
+    //place local variables on the runtime stack
+    code_seq ret = gen_code_var_decls(stmt.block.var_decls); 
+    ret = code_utils_save_registers_for_AR();
+    //place local constants on the runtime stack
+    code_seq_concat(&ret, gen_code_constants(stmt.block.const_decls))
     //generate code for the block
-    code_seq_concat(&ret, gen_code_stmt(prog.stmts));
+    code_seq_concat(&ret, gen_code_stmt(stmt.block.stmts));
     code_seq_concat(&ret, code_utils_restore_registers_from_AR());
     
     return ret;
@@ -230,6 +267,9 @@ code_seq gen_code_rel_op_condition(rel_op_condition_t relop_con, address_type re
     ret = code_seq_concat(&ret, gen_code_expr(relop_con.expr2))
     char *comparison = relop_con.rel_op.text;
     if(strcmp(comparison, "==") == 0){
+        if(relop_con.expr1.data.number == relop_con.expr2.data.number){
+            code_seq_add_to_end(&ret, code_lit(SP, -1, 1));
+        } else code_seq_add_to_end(&ret, code_lit(SP, -1, 0));
         code_seq_add_to_end(&ret, code_beq(SP, 1, 1));
         //I put 1 for i, because I think this belongs at the end of while loops
         //and should go to the next instr for an if statement -caitlin
