@@ -91,7 +91,7 @@ code_seq gen_code_idents(ident_list_t idents) {
  	int levout = id->levelsOutward;//someone please double check my pointer shenanigans -caitlin
 	int offset = id->attrs->offset_count;
 	code_seq ret = code_utils_compute_fp(3, levout);
-	ret = code_seq_add_to_end(&ret, code_cpw(SP, 0, 3, offset);
+	ret = code_seq_add_to_end(&ret, code_cpw(SP, 0, 3, offset));
 	return ret;
 }//end of gen_code_idents
 
@@ -169,13 +169,13 @@ code_seq gen_code_if_stmt(if_stmt_t stmt)
 
 code_seq gen_code_while_stmt(while_stmt_t stmt){
     code_seq ret = code_seq_concat(&ret, gen_code_block_stmt);
-    address_type ret_addr = code_seq_size(ret);
-    ret = gen_code_condition(stmt.condition, ret_addr);
+    ret = gen_code_condition(stmt.condition, code_seq_size(ret) + 1);
     return ret;
 }//end of gen_code_while_stmt
 
 code_seq gen_code_read_stmt(read_stmt_t stmt){
     code_seq ret = code_seq_empty();
+	
     return ret;
 }//end of gen_code_read_stmt
 
