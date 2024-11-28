@@ -67,7 +67,7 @@ BOFHeader gen_code_program_header(code_seq main_cs) {
     int dsa = MAX(ret.text_length, 1024) + BYTES_PER_WORD;
     ret.data_start_address = dsa;
 
-    ret.data_length = literal_table_size() ;
+    ret.data_length = literal_table_size();
 
     int sba = dsa + ret.data_start_address + ret.data_length + STACK_SPACE;
     ret.stack_bottom_addr = sba;
@@ -181,7 +181,7 @@ code_seq gen_code_expr_bin(binary_op_expr_t expr, reg_num_type reg) {
 //Expression Handling Function - Takes a Given Ident & Returns a Code Sequence of It as a Code ---------------------------------------
 code_seq gen_code_ident(ident_t ident, bool second, reg_num_type reg) {
 //    printf("IDENT %s: %d\n", ident.name, ident.idu->attrs->offset_count);
-    int offset = literal_table_get_offset(ident.name, 0); //------------------------------------------- check this
+    int offset = ident.idu->attrs->offset_count; //------------------------------------------- check this
     code_seq seq = push_reg_on_stack(GP, offset, second, reg);
 
     return seq;
@@ -223,7 +223,7 @@ code_seq gen_code_number( char* varName, number_t num, bool negate, bool second,
         return code_seq_singleton(code_lit(SP, (second?1:0), val));
     }
 
-    //If Name, Return CPW ASM Code With Offset From Literal Table 
+    //If Name, Return CPW ASM Code With Offset
     unsigned int global_offset = literal_table_get_offset(varName, val);
     return push_reg_on_stack(GP, global_offset, second, sp);
 }
@@ -323,7 +323,7 @@ code_seq gen_code_assign_stmt(assign_stmt_t stmt) {
     code_seq assign_cs = code_seq_empty();
 
     //Creating Expression Code
-    int offset = literal_table_get_offset(stmt.name,0);
+    int offset = stmt.idu->attrs->offset_count;
     code_seq_concat(&assign_cs, gen_code_expr(*stmt.expr, false, SP));
 
     //Adding CPW ASM Code to assign_cs
@@ -527,7 +527,7 @@ code_seq gen_code_read_stmt(read_stmt_t stmt) {
     code_seq read_cs = code_seq_empty();
 
     //Lookup Statement Name For Offset
-    int offset = literal_table_get_offset(stmt.name,0);
+    int offset = stmt.idu->attrs->offset_count;
     code_seq_add_to_end(&read_cs, code_rch(GP, offset));
 
     return read_cs;
@@ -620,6 +620,7 @@ code_seq gen_code_const(const_def_t* const_def) {
         bool negate = false;
 
         //Concat Code To Sequence
+        literal_table_add(const_def->number.text, const_def->number.value);
         char* ident_name = malloc(sizeof(const_def->ident.name));
         strcpy(ident_name, const_def->ident.name);
         code_seq_concat(&const_cs, gen_code_number(ident_name, const_def->number, negate, false, SP));
@@ -640,7 +641,7 @@ code_seq gen_code_consts(const_decls_t const_decls) {
     while (start != NULL) {
         const_def_t* def = start->const_def_list.start;
         while (def != NULL) {
-            code_seq_concat(&consts_cs,gen_code_const(def));
+            code_seq_concat(&consts_cs, gen_code_const(def));
             def = def->next;
         }
 

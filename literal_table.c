@@ -36,7 +36,7 @@ table_entry* literal_table_contains(const char *target, word_type value){
     table_entry* cur = first;
     while(cur != NULL){
         //if the target text and the constant value match, return table entry
-        if(strcmp(target, cur->text) == 0 && cur->value == value){
+        if(cur->value == value){
             return cur;
         }
         //move to the next entry
@@ -54,7 +54,7 @@ int literal_table_get_offset(const char *target, word_type value){
     //try to find the entry, if you don't find it return -1
     table_entry* found_entry = literal_table_contains(target, value);
     if (found_entry == NULL) 
-        return -1;
+        return -10;
 
     //if found entry is not null, return the offset
     return found_entry->offset;
