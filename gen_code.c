@@ -736,7 +736,15 @@ code_seq gen_code_idents(ident_list_t idents) {
     while (idptr != NULL) {
         if (idptr->idu != NULL) {
             id_use *id = idptr->idu;
+            if(id == NULL){
+                printf("idu was null")
+                assert(id != NULL);
+            }
             int levout = id->levelsOutward;
+            if(id->attrs == NULL){
+                printf("id_attrs was null")
+                assert(id->attrs != NULL);
+            }
             int offset = id->attrs->offset_count;
             code_seq fp_cs = code_utils_compute_fp(3, levout);
             code_seq_concat(&ret, fp_cs);
