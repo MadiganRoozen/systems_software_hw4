@@ -763,11 +763,11 @@ void gen_code_program(BOFFILE bf, block_t b) {
     code_seq main_cs = code_utils_set_up_program();
 
     
-
+    code_seq_concat(&main_cs, gen_code_var_decls(b.var_decls)); 
     //Concat Consts Code Sequences
     code_seq_concat(&main_cs, gen_code_consts(b.const_decls));
 
-    // code_seq_concat(&main_cs, gen_code_var_decls(b.var_decls)); 
+    
 
     main_cs = code_utils_save_registers_for_AR();
 
